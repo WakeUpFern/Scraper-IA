@@ -1,0 +1,43 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environments and dependencies
+.venv/
+venv/
+ENV/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.eggs/
+
+# Sensitive files / API Keys
+.env
+nvidia_ai_premvp/.env
+
+# Social scraper session states (contains browser cookies/auth tokens)
+*.json
+!docker-compose.yml
+!package.json
+!tsconfig.json
+
+# If we want to allow specific config json files, we can un-ignore them,
+# but we must ignore specific state files:
+nvidia_ai_premvp/*state.json
+nvidia_ai_premvp/instagram_state.json
+nvidia_ai_premvp/facebook_state.json
+nvidia_ai_premvp/x_state.json
+
+# IDEs
+.vscode/
+.idea/
+.agents/
+.gemini/

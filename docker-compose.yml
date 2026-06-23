@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  nvidia_ai_premvp:
+    build:
+      context: ./nvidia_ai_premvp
+      dockerfile: Dockerfile
+    container_name: nvidia_ai_premvp
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./nvidia_ai_premvp:/app
+      - /app/.venv # Don't mount the local .venv inside the container to avoid conflicts
+    env_file:
+      - ./nvidia_ai_premvp/.env
+    restart: unless-stopped
+
+networks:
+  default:
+    name: naat_default
+    external: true
+
