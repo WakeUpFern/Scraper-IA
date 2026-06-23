@@ -1,0 +1,226 @@
+{
+	"info": {
+		"_postman_id": "9b262b9d-2e8d-46b2-bc79-36f98b675774",
+		"name": "Scr4per v3 MVP API",
+		"description": "Colección de Postman para probar el microservicio de adquisición OSINT social Scr4per v3 con el Agente ReAct del Sprint 7.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Check Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "NVIDIA NIM Proxy",
+			"item": [
+				{
+					"name": "Chat Completion",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Explica en un párrafo qué es OSINT.\",\n  \"model\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Scraper Analysis",
+			"item": [
+				{
+					"name": "Iniciar Análisis Agentico (ReAct)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id_usuario\": 1,\n  \"id_caso\": null,\n  \"id_identidad_digital_objetivo\": null,\n  \"platform\": \"instagram\",\n  \"username_or_url\": \"juanp\",\n  \"limits\": {\n    \"max_followers\": 5,\n    \"max_following\": 5,\n    \"max_posts\": 2,\n    \"max_comments_per_post\": 2\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/scraper/analyses/{{id_analisis}}/run",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scraper",
+								"analyses",
+								"{{id_analisis}}",
+								"run"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Estado de Análisis",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scraper/analyses/{{id_analisis}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scraper",
+								"analyses",
+								"{{id_analisis}}",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Historial de Tool Runs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scraper/analyses/{{id_analisis}}/tool-runs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scraper",
+								"analyses",
+								"{{id_analisis}}",
+								"tool-runs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Construir Grafo Técnico",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scraper/analyses/{{id_analisis}}/graph/build",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scraper",
+								"analyses",
+								"{{id_analisis}}",
+								"graph",
+								"build"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ejecutar Herramienta Explícita",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"juanp\",\n  \"profile_url\": \"https://instagram.com/juanp\",\n  \"platform\": \"instagram\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/scraper/analyses/{{id_analisis}}/tools/{{tool_name}}/run",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scraper",
+								"analyses",
+								"{{id_analisis}}",
+								"tools",
+								"{{tool_name}}",
+								"run"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://100.93.131.43:8010",
+			"type": "string"
+		},
+		{
+			"key": "id_analisis",
+			"value": "3",
+			"type": "string"
+		},
+		{
+			"key": "tool_name",
+			"value": "fetch_profile_snapshot",
+			"type": "string"
+		}
+	]
+}
