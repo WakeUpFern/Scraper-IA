@@ -1,18 +1,17 @@
 version: '3.8'
 
 services:
-  nvidia_ai_premvp:
+  scraperv3:
     build:
-      context: ./nvidia_ai_premvp
+      context: .
       dockerfile: Dockerfile
-    container_name: nvidia_ai_premvp
+    container_name: naatv3-scraper
     ports:
       - "8010:8010"
     volumes:
-      - ./nvidia_ai_premvp:/app
-      - /app/.venv # Don't mount the local .venv inside the container to avoid conflicts
-    env_file:
-      - ./nvidia_ai_premvp/.env
+      - ./scraper:/app/scraper
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-naat3:5432/naat_db2
     restart: unless-stopped
 
 networks:
