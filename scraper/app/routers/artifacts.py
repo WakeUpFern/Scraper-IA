@@ -28,7 +28,7 @@ async def get_artifacts(job_id: int):
         for p in ARTIFACTS_DIR.iterdir():
             if p.name.startswith(f"job_{job_id}"):
                 ext = p.suffix.lstrip(".")
-                ftype = {"json": "json", "csv": "csv", "png": "screenshot", "log": "log"}.get(ext, "file")
+                ftype = {"json": "json", "csv": "csv", "png": "screenshot", "log": "log", "xlsx": "excel"}.get(ext, "file")
                 items.append(ArtifactItem(
                     name=p.name,
                     type=ftype,

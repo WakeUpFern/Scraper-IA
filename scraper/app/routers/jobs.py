@@ -27,9 +27,9 @@ _active_tasks: dict[int, asyncio.Task] = {}
 async def create_job(req: JobRequest, background_tasks: BackgroundTasks):
     pool = await get_pool()
 
-    # Only facebook supported in MVP
-    if req.target.platform != "facebook":
-        raise HTTPException(422, f"Plataforma '{req.target.platform}' no implementada en el MVP")
+    # Supported platforms: facebook, instagram, x
+    if req.target.platform not in ("facebook", "instagram", "x"):
+        raise HTTPException(422, f"Plataforma '{req.target.platform}' no implementada")
 
     row = await pool.fetchrow(
         """
