@@ -41,3 +41,6 @@ nvidia_ai_premvp/x_state.json
 .idea/
 .agents/
 .gemini/
+
+# Scraped data exports (raw output, not source code)
+*.csv

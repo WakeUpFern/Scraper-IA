@@ -35,6 +35,7 @@ class JobLimits(BaseModel):
 
 
 class JobRequest(BaseModel):
+    analysis_id: Optional[int] = None
     target: JobTarget
     scope: JobScope = Field(default_factory=JobScope)
     limits: JobLimits = Field(default_factory=JobLimits)

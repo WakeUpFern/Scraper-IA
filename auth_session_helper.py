@@ -1,4 +1,4 @@
-"""
+@"""
 Script auxiliar para iniciar sesión de forma interactiva y guardar el estado (cookies y storage).
 Ayuda a evitar bloqueos de login y a reutilizar sesiones autenticadas en el scraper.
 """

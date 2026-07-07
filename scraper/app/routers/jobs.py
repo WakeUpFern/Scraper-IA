@@ -17,7 +17,7 @@ from app.schemas import JobCreated, JobLimits, JobProgress, JobRequest, JobScope
 from app.worker import run_job
 
 logger = logging.getLogger("scr4per.jobs")
-router = APIRouter(prefix="/v1/jobs", tags=["jobs"])
+router = APIRouter(prefix="/internal/v1/jobs", tags=["jobs"])
 
 # ponytail: track active tasks for cooperative cancel
 _active_tasks: dict[int, asyncio.Task] = {}
@@ -31,17 +31,35 @@ async def create_job(req: JobRequest, background_tasks: BackgroundTasks):
     if req.target.platform not in ("facebook", "instagram", "x"):
         raise HTTPException(422, f"Plataforma '{req.target.platform}' no implementada")
 
-    row = await pool.fetchrow(
-        """
-        INSERT INTO redes.analisis (tipo_analisis, estado, parametros)
-        VALUES ($1, 'queued', $2)
-        RETURNING id_analisis, fecha_inicio
-        """,
-        f"osint_{req.target.platform}",
-        json.dumps(req.model_dump(mode="json")),
-    )
-    job_id: int = row["id_analisis"]
-    created_at: datetime = row["fecha_inicio"]
+    if req.analysis_id:
+        # Check if analysis exists
+        row_check = await pool.fetchrow("SELECT fecha_inicio FROM redes.analisis WHERE id_analisis = $1", req.analysis_id)
+        if not row_check:
+            raise HTTPException(404, f"Análisis {req.analysis_id} no encontrado en Core")
+        
+        await pool.execute(
+            """
+            UPDATE redes.analisis
+            SET estado = 'queued', parametros = $2, fecha_modificacion = NOW()
+            WHERE id_analisis = $1
+            """,
+            req.analysis_id,
+            json.dumps(req.model_dump(mode="json")),
+        )
+        job_id = req.analysis_id
+        created_at = row_check["fecha_inicio"] or datetime.now(timezone.utc)
+    else:
+        row = await pool.fetchrow(
+            """
+            INSERT INTO redes.analisis (tipo_analisis, estado, parametros)
+            VALUES ($1, 'queued', $2)
+            RETURNING id_analisis, fecha_inicio
+            """,
+            f"osint_{req.target.platform}",
+            json.dumps(req.model_dump(mode="json")),
+        )
+        job_id = row["id_analisis"]
+        created_at = row["fecha_inicio"]
 
     # Launch background task
     task = asyncio.create_task(run_job(job_id, req))

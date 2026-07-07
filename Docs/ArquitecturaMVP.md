@@ -33,8 +33,8 @@ El objetivo no es hacer un prototipo desechable. La estructura debe permitir int
 - Playwright para navegacion, storage state, contextos aislados, scroll, modales e interceptacion de respuestas GraphQL.
 - Scrapling como parser de HTML complementario y fallback.
 - Adaptador inicial de Facebook a partir de `facebook_analyzer.py`.
-- Base para adaptadores de Instagram y X.
-- Persistencia en una copia limpia de PostgreSQL con el esquema actual.
+- Base para adaptadores de Instagram y X unicamente carpetas vacias.
+- Persistencia en una copia limpia de PostgreSQL con el esquema actual que se encuentra en migrations.
 - Creacion de identidades digitales y evidencia social en `personas` y `redes`.
 - Construccion manual y consulta del grafo tecnico.
 - Logs estructurados, errores clasificados, artefactos y tool runs.
