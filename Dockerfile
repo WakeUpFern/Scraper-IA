@@ -58,7 +58,7 @@ COPY scraper/ /app/scraper/
 # Establecer directorio de trabajo en la carpeta scraper
 WORKDIR /app/scraper
 
-EXPOSE 8010
+EXPOSE 8003
 
 # Comando para iniciar la aplicación con uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8010"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
