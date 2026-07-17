@@ -6,7 +6,7 @@ from .base import BaseTool, ToolContext, ToolResult
 from .registry import register_tool, TOOL_REGISTRY
 
 # ponytail: Importación explícita para registrar las herramientas dinámicamente.
-from .common import build_graph, export_csv, export_excel, persist_results
+from .common import build_graph, export_csv, export_excel
 from .facebook import (
     validate_session as fb_val,
     fetch_profile_snapshot as fb_snap,

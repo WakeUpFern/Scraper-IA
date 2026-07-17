@@ -5,7 +5,6 @@ ponytail: Contenedores simples de contexto y resultado para evitar boilerplate d
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from playwright.async_api import BrowserContext, Page
-import asyncpg
 
 class ToolContext:
     def __init__(
@@ -18,7 +17,6 @@ class ToolContext:
         scope: Dict[str, Any],
         browser_context: Optional[BrowserContext] = None,
         page: Optional[Page] = None,
-        db_pool: Optional[asyncpg.Pool] = None,
     ):
         self.job_id = job_id
         self.platform = platform
@@ -28,7 +26,6 @@ class ToolContext:
         self.scope = scope
         self.browser_context = browser_context
         self.page = page
-        self.db_pool = db_pool
         # ponytail: El acumulador central de resultados simplifica compartir datos entre herramientas.
         self.previous_results: Dict[str, Any] = {
             "profile": None,

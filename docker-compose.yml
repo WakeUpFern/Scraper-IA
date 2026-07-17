@@ -6,16 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: naatv3-scraper
-    ports:
-      - "8003:8003"
     volumes:
       - ./scraper:/app/scraper
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres-naat3:5432/naat_db2
+      - CORE_API_BASE_URL=http://naat-api:8080
+      - SCRAPER_SERVICE_API_KEY=${SCRAPER_SERVICE_API_KEY:?Configura SCRAPER_SERVICE_API_KEY}
     restart: unless-stopped
 
 networks:
   default:
     name: naat_default
     external: true
-
