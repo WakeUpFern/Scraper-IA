@@ -147,189 +147,208 @@ async def run_job(job_id: int, request: "JobRequest") -> None:
     pool = await get_pool()
     started = datetime.now()
 
-    await _update_analisis(pool, job_id, estado="running", fecha_inicio=started)
-    logger.info("[job %s] Iniciando ejecución modular de %s...", job_id, request.target.url_or_username)
+    try:
+        await _update_analisis(pool, job_id, estado="running", fecha_inicio=started)
+        logger.info("[job %s] Iniciando ejecución modular de %s...", job_id, request.target.url_or_username)
 
-    platform = request.target.platform
-    scope = request.scope.model_dump()
-    limits = request.limits.model_dump()
+        platform = request.target.platform
+        scope = request.scope.model_dump()
+        limits = request.limits.model_dump()
 
-    # ponytail: Determinar dinámicamente el plan de herramientas
-    plan = []
-    if platform == "facebook":
-        plan.append("facebook.validate_session")
-        if scope.get("profile", True):
-            plan.append("facebook.fetch_profile_snapshot")
-        if scope.get("friends", False):
-            plan.append("facebook.fetch_friends")
-        if scope.get("followers", False):
-            plan.append("facebook.fetch_followers")
-        if scope.get("following", False):
-            plan.append("facebook.fetch_following")
-        if scope.get("photos", False) or scope.get("reactions", False) or scope.get("comments", False):
-            plan.append("facebook.fetch_photo_engagements")
-    elif platform == "instagram":
-        plan.append("instagram.validate_session")
-        if scope.get("profile", True):
-            plan.append("instagram.fetch_profile_snapshot")
-        if scope.get("followers", False):
-            plan.append("instagram.fetch_followers")
-        if scope.get("following", False):
-            plan.append("instagram.fetch_following")
-        if scope.get("photos", False) or scope.get("reactions", False) or scope.get("comments", False):
-            plan.append("instagram.fetch_post_engagements")
-    elif platform == "x":
-        plan.append("x.validate_session")
-        if scope.get("profile", True):
-            plan.append("x.fetch_profile_snapshot")
-        if scope.get("followers", False):
-            plan.append("x.fetch_followers")
-        if scope.get("following", False):
-            plan.append("x.fetch_following")
-        if scope.get("comments", False):
-            plan.append("x.fetch_post_engagements")
+        # ponytail: Determinar dinámicamente el plan de herramientas
+        plan = []
+        if platform == "facebook":
+            plan.append("facebook.validate_session")
+            if scope.get("profile", True):
+                plan.append("facebook.fetch_profile_snapshot")
+            if scope.get("friends", False):
+                plan.append("facebook.fetch_friends")
+            if scope.get("followers", False):
+                plan.append("facebook.fetch_followers")
+            if scope.get("following", False):
+                plan.append("facebook.fetch_following")
+            if scope.get("photos", False) or scope.get("reactions", False) or scope.get("comments", False):
+                plan.append("facebook.fetch_photo_engagements")
+        elif platform == "instagram":
+            plan.append("instagram.validate_session")
+            if scope.get("profile", True):
+                plan.append("instagram.fetch_profile_snapshot")
+            if scope.get("followers", False):
+                plan.append("instagram.fetch_followers")
+            if scope.get("following", False):
+                plan.append("instagram.fetch_following")
+            if scope.get("photos", False) or scope.get("reactions", False) or scope.get("comments", False):
+                plan.append("instagram.fetch_post_engagements")
+        elif platform == "x":
+            plan.append("x.validate_session")
+            if scope.get("profile", True):
+                plan.append("x.fetch_profile_snapshot")
+            if scope.get("followers", False):
+                plan.append("x.fetch_followers")
+            if scope.get("following", False):
+                plan.append("x.fetch_following")
+            if scope.get("comments", False):
+                plan.append("x.fetch_post_engagements")
 
-    # Agregar herramientas comunes
-    plan.append("common.build_graph")
-    plan.append("common.persist_results")
-    plan.append("common.export_excel")
-    plan.append("common.export_csv")
+        # Agregar herramientas comunes
+        plan.append("common.build_graph")
+        plan.append("common.persist_results")
+        plan.append("common.export_excel")
+        plan.append("common.export_csv")
 
-    logger.info("[job %s] Plan de herramientas: %s", job_id, plan)
+        logger.info("[job %s] Plan de herramientas: %s", job_id, plan)
 
-    storage_state = get_storage_state_path(platform)
-    
-    async with async_playwright() as pw:
-        # ponytail: Navegador centralizado
-        browser = await pw.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        browser_context = await browser.new_context(
-            storage_state=storage_state,
-            viewport={"width": 1280, "height": 720},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
-            ),
-        )
-        page = await browser_context.new_page()
+        storage_state = get_storage_state_path(platform)
+        
+        async with async_playwright() as pw:
+            # ponytail: Navegador centralizado
+            browser = await pw.chromium.launch(
+                headless=True,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                ],
+            )
+            browser_context = await browser.new_context(
+                storage_state=storage_state,
+                viewport={"width": 1280, "height": 720},
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                ),
+            )
+            page = await browser_context.new_page()
 
-        ctx = ToolContext(
-            job_id=job_id,
-            platform=platform,
-            target_url=request.target.url_or_username,
-            username="",
-            limits=limits,
-            scope=scope,
-            browser_context=browser_context,
-            page=page,
-            db_pool=pool,
-        )
+            ctx = ToolContext(
+                job_id=job_id,
+                platform=platform,
+                target_url=request.target.url_or_username,
+                username="",
+                limits=limits,
+                scope=scope,
+                browser_context=browser_context,
+                page=page,
+                db_pool=pool,
+            )
 
-        job_failed = False
-        job_error_msg = None
+            job_failed = False
+            job_error_msg = None
 
-        for tool_name in plan:
-            if tool_name not in TOOL_REGISTRY:
-                logger.error("[job %s] Herramienta %s no registrada", job_id, tool_name)
-                continue
-
-            tool_cls = TOOL_REGISTRY[tool_name]
-            tool_inst = tool_cls()
-            tool_started = datetime.now()
-
-            logger.info("[job %s] Ejecutando %s...", job_id, tool_name)
-            try:
-                if job_failed and not tool_name.startswith("common."):
-                    logger.warning("[job %s] Omitiendo %s por fallo crítico previo", job_id, tool_name)
+            for tool_name in plan:
+                if tool_name not in TOOL_REGISTRY:
+                    logger.error("[job %s] Herramienta %s no registrada", job_id, tool_name)
                     continue
 
-                res = await tool_inst.run(ctx)
-                tool_finished = datetime.now()
+                tool_cls = TOOL_REGISTRY[tool_name]
+                tool_inst = tool_cls()
+                tool_started = datetime.now()
 
-                # Guardar en redes.tool_run
-                await _insert_tool_run(
-                    pool,
-                    id_analisis=job_id,
-                    tool_name=tool_name,
-                    platform=platform,
-                    input_data={"target": request.target.url_or_username},
-                    output_data={"status": res.status, "artifacts": res.artifacts},
-                    status=res.status,
-                    error=res.error,
-                    started=tool_started,
-                    finished=tool_finished,
-                    strategy="playwright+scrapling"
-                )
+                logger.info("[job %s] Ejecutando %s...", job_id, tool_name)
+                try:
+                    if job_failed and not tool_name.startswith("common."):
+                        logger.warning("[job %s] Omitiendo %s por fallo crítico previo", job_id, tool_name)
+                        continue
 
-            except Exception as exc:
-                tool_finished = datetime.now()
-                err_str = str(exc)
-                logger.error("[job %s] Error en %s: %s", job_id, tool_name, err_str)
+                    res = await tool_inst.run(ctx)
+                    tool_finished = datetime.now()
 
-                await _insert_tool_run(
-                    pool,
-                    id_analisis=job_id,
-                    tool_name=tool_name,
-                    platform=platform,
-                    input_data={"target": request.target.url_or_username},
-                    output_data={"status": "failed"},
-                    status="failed",
-                    error=err_str,
-                    started=tool_started,
-                    finished=tool_finished,
-                    strategy="playwright+scrapling"
-                )
+                    # Guardar en redes.tool_run
+                    await _insert_tool_run(
+                        pool,
+                        id_analisis=job_id,
+                        tool_name=tool_name,
+                        platform=platform,
+                        input_data={"target": request.target.url_or_username},
+                        output_data={"status": res.status, "artifacts": res.artifacts},
+                        status=res.status,
+                        error=res.error,
+                        started=tool_started,
+                        finished=tool_finished,
+                        strategy="playwright+scrapling"
+                    )
 
-                is_critical = tool_name.endswith(".validate_session") or tool_name.endswith(".fetch_profile_snapshot")
-                if is_critical:
-                    job_failed = True
-                    job_error_msg = err_str
-                    break
-                else:
-                    if "errors" not in ctx.previous_results:
-                        ctx.previous_results["errors"] = []
-                    ctx.previous_results["errors"].append({"tool": tool_name, "error": err_str})
+                except Exception as exc:
+                    tool_finished = datetime.now()
+                    err_str = str(exc)
+                    logger.error("[job %s] Error en %s: %s", job_id, tool_name, err_str)
 
-        await browser.close()
+                    await _insert_tool_run(
+                        pool,
+                        id_analisis=job_id,
+                        tool_name=tool_name,
+                        platform=platform,
+                        input_data={"target": request.target.url_or_username},
+                        output_data={"status": "failed"},
+                        status="failed",
+                        error=err_str,
+                        started=tool_started,
+                        finished=tool_finished,
+                        strategy="playwright+scrapling"
+                    )
 
-    if job_failed:
+                    is_critical = tool_name.endswith(".validate_session") or tool_name.endswith(".fetch_profile_snapshot")
+                    if is_critical:
+                        job_failed = True
+                        job_error_msg = err_str
+                        break
+                    else:
+                        if "errors" not in ctx.previous_results:
+                            ctx.previous_results["errors"] = []
+                        ctx.previous_results["errors"].append({"tool": tool_name, "error": err_str})
+
+            await browser.close()
+
+        if job_failed:
+            await _update_analisis(
+                pool, job_id,
+                estado="failed",
+                error=job_error_msg,
+                fecha_fin=datetime.now(),
+                resultado=json.dumps({"error": job_error_msg}),
+            )
+            logger.error("[job %s] Job fallido. Error crítico: %s", job_id, job_error_msg)
+            return
+
+        # Guardar snapshot del grafo si build_graph funcionó
+        graph = ctx.previous_results.get("graph")
+        if graph:
+            await _update_analisis(pool, job_id, estado="graph_building")
+            await _save_graph_snapshot(pool, job_id, graph)
+
+        results = ctx.previous_results
+        summary = {
+            "profile": results.get("profile", {}).get("nombre_completo") if results.get("profile") else request.target.url_or_username,
+            "friends": len(results.get("friends", [])),
+            "followers": len(results.get("followers", [])),
+            "followed": len(results.get("followed", [])),
+            "reactions": len(results.get("reactions", [])),
+            "comments": len(results.get("comments", [])),
+            "nodes": len(graph["nodes"]) if graph else 0,
+            "edges": len(graph["edges"]) if graph else 0,
+            "artifacts_count": len(results.get("artifacts", [])),
+            "errors": results.get("errors", [])
+        }
+
         await _update_analisis(
             pool, job_id,
-            estado="failed",
-            error=job_error_msg,
+            estado="completed",
+            resultado=json.dumps(summary),
             fecha_fin=datetime.now(),
-            resultado=json.dumps({"error": job_error_msg}),
         )
-        logger.error("[job %s] Job fallido. Error crítico: %s", job_id, job_error_msg)
-        return
+        logger.info("[job %s] Completado. %s", job_id, summary)
 
-    # Guardar snapshot del grafo si build_graph funcionó
-    graph = ctx.previous_results.get("graph")
-    if graph:
-        await _update_analisis(pool, job_id, estado="graph_building")
-        await _save_graph_snapshot(pool, job_id, graph)
-
-    results = ctx.previous_results
-    summary = {
-        "profile": results.get("profile", {}).get("nombre_completo") if results.get("profile") else request.target.url_or_username,
-        "friends": len(results.get("friends", [])),
-        "followers": len(results.get("followers", [])),
-        "followed": len(results.get("followed", [])),
-        "reactions": len(results.get("reactions", [])),
-        "comments": len(results.get("comments", [])),
-        "nodes": len(graph["nodes"]) if graph else 0,
-        "edges": len(graph["edges"]) if graph else 0,
-        "artifacts_count": len(results.get("artifacts", [])),
-        "errors": results.get("errors", [])
-    }
-
-    await _update_analisis(
-        pool, job_id,
-        estado="completed",
-        resultado=json.dumps(summary),
-        fecha_fin=datetime.now(),
-    )
-    logger.info("[job %s] Completado. %s", job_id, summary)
+    except Exception as exc:
+        logger.exception("[job %s] Error catastrófico en run_job: %s", job_id, exc)
+        try:
+            await _update_analisis(
+                pool, job_id,
+                estado="failed",
+                error=str(exc),
+                fecha_fin=datetime.now(),
+                resultado=json.dumps({"error": str(exc)}),
+            )
+        except Exception as db_exc:
+            logger.error("[job %s] No se pudo guardar el error en base de datos: %s", job_id, db_exc)

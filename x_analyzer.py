@@ -449,7 +449,12 @@ async def main():
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(
             headless=headless,
-            args=["--disable-blink-features=AutomationControlled"],
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ],
         )
         context = await browser.new_context(
             storage_state=str(storage_path),
